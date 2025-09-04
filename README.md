@@ -47,7 +47,7 @@ This project demonstrates a **modern Lakehouse architecture** for streaming data
 # 📂 3. Project Structure
 
 ```text
-stream-pipeline-via-lakehouse/
+batch-and-stream-pipeline-via-lakehouse/
 │
 ├── docker/
 │   ├── init/                            # Initialization scripts in containers
