@@ -9,11 +9,9 @@
 
 # 📌 1. Introduction
 
-⚠️ **Note:** This project is still ongoing.
+This project demonstrates a **modern Lakehouse architecture** for streaming data pipelines, built on **Apache Iceberg tables**, providing ACID transactions, schema evolution, and snapshot-based consistency for reliable data storage. Data is progressively refined through a **medallion architecture (Bronze → Silver → Gold)** for analytics and BI use cases. The pipeline supports **real-time ingestion of transactional data** and **scheduled updates of reference/dimension data**.
 
-This project demonstrates a **modern Lakehouse architecture** for streaming data pipelines, built on **Apache Iceberg tables**, providing ACID transactions, schema evolution, and snapshot-based consistency for reliable data storage. Data is progressively refined through a **medallion architecture (Bronze → Silver → Gold)** for analytics and BI use cases. The architecture supports real-time ingestion of transactional data and scheduled updates of reference/dimension data.
-
-**Data Source:** Data is fetched through **VNStock** Python Library
+**Data Source:** Data is fetched through **VNStock Python Library**
 
 **Key features of this project include:**
 
@@ -30,12 +28,12 @@ This project demonstrates a **modern Lakehouse architecture** for streaming data
 
 ![Lakehouse Architecture](readme/lakehouse.png)
 
-**Test creating a table using Trino through DBeaver:**
+💡 **Test creating a table using Trino through DBeaver:**
 
 > The script is put under `experiments` folder
 > ![Test creating table using Trino](readme/trino-iceberg-example.png)
 
-**Check the result on MinIO:**
+💡 **Check the result on MinIO:**
 ![MinIO Result](readme/iceberg-table-example-1.png)
 ![MinIO Result](readme/iceberg-table-example-2.png)
 ![MinIO Result](readme/iceberg-table-example-3.png)
@@ -160,20 +158,64 @@ python data/_get_all_data.py
 
 ## 4.4 Run the pipeline
 
-### Step 1: Initializing Schema
+### Step 1: Initializing Schema in Lakehouse
 
 Once Trino container is running, you can initialize the Lakehouse schema using the SQL initialization script:
-
 ```bash
-# Access Trino container
+# Access the Trino container
 make trino-bash
 # Run the SQL initialization script
 trino --server localhost:8080 --catalog iceberg --file /init/lakehouse_init.sql
 ```
 
-Here is the result of running the schema initialization script:
+Here is the result of running the schema initialization script in MinIO:
 ![Result of Initializing Schema on MinIO](readme/lakehouse-init.png)
 
 ### Step 2: Running Batch Pipeline
 
+Before running the batch pipeline in Airflow, you need to **set up SSH connections** between the Airflow container and the Spark container:
+```bash
+# Access the Airflow container
+make airflow-bash
+# Copy Airflow’s SSH public key to Spark container
+sshpass -p 'spark_pass' ssh-copy-id -o StrictHostKeyChecking=no -i /home/airflow/.ssh/id_ecdsa.pub spark_user@spark-master
+# To verify the result, access Spark container and print the public key
+make spark-bash
+cat /home/spark_user/.ssh/authorized_keys
+```
+
+After setting up the SSH connection, **access the Airflow UI to trigger the batch DAGs**:
+![Batch ELT Company](readme/batch-elt-company.png)
+![Batch ELT Industry](readme/batch-elt-industry.png)
+
+💡 Once the DAGs finish, you can open DBeaver and connect to Trino to query the Lakehouse and verify the results.
+
 ### Step 3: Running Stream Pipeline
+
+Run the script to produce streaming data to Kafka:
+```bash
+# Access the Airflow container
+make airflow-bash
+# Run the producer script
+python dags/producer/ohlcv_producer.py
+```
+💡 Check Kafka UI to verify the data stream:
+![Kafka UI](readme/kafka-ui.png)
+
+Ingest raw streaming data from Kafka into the Lakehouse:
+```bash
+# Access the Spark container
+make spark-bash
+# Run the ingestion script
+spark-submit bronze/raw_ohlcv.py
+```
+
+Process data from Bronze to Silver:
+```bash
+# Access the Spark container
+make spark-bash
+# Run the processing script
+spark-submit silver/processed_ohlcv.py
+```
+
+💡 Check the ingested and processed data in MinIO or query via Trino using DBeaver.
