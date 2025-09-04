@@ -52,12 +52,12 @@ This project demonstrates a **modern Lakehouse architecture** for streaming data
 stream-pipeline-via-lakehouse/
 │
 ├── docker/
-│   ├── init/                              # Initialization scripts in containers
-│   ├── hive/                              # Hive metastore configuration + Dockerfile
-│   ├── trino/                             # Trino configuration
-│   ├── spark/                             # Spark configuration + Dockerfile
-│   ├── airflow/                           # Airflow Dockerfile
-│   ├── superset/                          # Superset configuration + Dockerfile
+│   ├── init/                            # Initialization scripts in containers
+│   ├── hive/                            # Hive metastore configuration + Dockerfile
+│   ├── trino/                           # Trino configuration
+│   ├── spark/                           # Spark configuration + Dockerfile
+│   ├── airflow/                         # Airflow Dockerfile
+│   ├── superset/                        # Superset configuration + Dockerfile
 │
 ├── data/                              # Raw datasets
 ├── experiments/                       # Notebooks and scripts for testing pipelines and data exploration
