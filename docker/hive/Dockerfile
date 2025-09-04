@@ -2,7 +2,7 @@ FROM openjdk:8-jre
 
 
 RUN apt-get update && \
-    apt-get install -y curl tar procps netcat-openbsd && \
+    apt-get install -y curl tar netcat-openbsd && \
     rm -rf /var/lib/apt/lists/*
 
 

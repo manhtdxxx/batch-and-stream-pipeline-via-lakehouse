@@ -32,7 +32,7 @@ services:
 
   hive-metastore:
     build:
-      context: ./hive
+      context: ./docker/hive
       dockerfile: Dockerfile
     image: my-hive
     container_name: hive-metastore
@@ -56,8 +56,8 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./trino/etc:/etc/trino
-      - ./init/schema-init.sql:/init/lakehouse-init.sql
+      - ./docker/trino/etc:/etc/trino
+      - ./docker/init/lakehouse_init.sql:/init/lakehouse_init.sql
     networks:
       - common-net
 
@@ -68,42 +68,9 @@ services:
       - minio
     restart: "no"
     volumes:
-      - ./init/create_buckets.py:/init/create_buckets.py
+      - ./docker/init/minio_init.py:/init/minio_init.py
     command: >
-      /bin/sh -c "pip install --no-cache-dir minio && python /init/create_buckets.py"
-    networks:
-      - common-net
-
-  superset:
-    build:
-      context: ./superset
-      dockerfile: Dockerfile
-    image: my-superset
-    container_name: superset
-    depends_on:
-      - trino
-    restart: unless-stopped
-    command: >
-      /bin/bash -c "
-        echo 'Starting DB upgrade...' &&
-        superset db upgrade &&
-        echo 'DB upgrade done.' &&
-        
-        echo 'Creating admin user...' &&
-        superset fab create-admin --username superset --password superset --firstname Superset --lastname Admin --email tdmanh1510@gmail.com &&
-        echo 'Admin creation done.' &&
-        
-        echo 'Initializing Superset...' &&
-        superset init &&
-        echo 'Initialization done.' &&
-        
-        echo 'Starting Superset server...' &&
-        superset run -h 0.0.0.0 -p 8088 --with-threads --reload --debugger
-      "
-    ports:
-      - 8088:8088
-    volumes:
-      - superset-data:/app/superset_home
+      /bin/sh -c "pip install --no-cache-dir minio && python /init/minio_init.py"
     networks:
       - common-net
 
@@ -112,8 +79,6 @@ volumes:
     name: minio-data
   metastore-data:
     name: metastore-data
-  superset-data:
-    name: superset-data
 
 networks:
   common-net:

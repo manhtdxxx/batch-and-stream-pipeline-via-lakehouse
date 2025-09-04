@@ -8,17 +8,19 @@
 ---
 
 # 📌 1. Introduction
-⚠️ **Note:** This project is still ongoing.  
 
-This project demonstrates a **modern Lakehouse architecture** for streaming data pipelines, built on **Apache Iceberg tables**, providing ACID transactions, schema evolution, and snapshot-based consistency for reliable data storage. The main goal is to ingest raw streaming data as it arrives, **automatically triggering both ingestion and subsequent transformations**. Data is progressively refined through a **medallion architecture (Bronze → Silver → Gold)** for analytics and BI use cases.
+⚠️ **Note:** This project is still ongoing.
 
-**Data Source:** ...
+This project demonstrates a **modern Lakehouse architecture** for streaming data pipelines, built on **Apache Iceberg tables**, providing ACID transactions, schema evolution, and snapshot-based consistency for reliable data storage. Data is progressively refined through a **medallion architecture (Bronze → Silver → Gold)** for analytics and BI use cases. The architecture supports real-time ingestion of transactional data and scheduled updates of reference/dimension data.
+
+**Data Source:** Data is fetched through **VNStock** Python Library
 
 **Key features of this project include:**
-- `Unified Data Storage`: Combine the benefits of data lakes and data warehouses using a Lakehouse approach.
-- `Streaming ETL Pipeline`: Capture and process streaming data using Kafka & Spark Streaming.
-- `Query & Analytics`: Enable SQL querying on the Lakehouse using Trino and visualize insights with Superset.
-- `Containerized Architecture`: All services (Kafka, Spark, MinIO, Hive Metastore, Trino, Superset) are orchestrated via Docker for easy setup and reproducibility.
+
+- **_Unified Data Storage_**: Combine the benefits of data lakes and data warehouses using a Lakehouse approach.
+- **_Batch & Stream ELT Pipeline_**: Capture and process streaming data using Kafka & Spark Streaming, and run batch workflows with Apache Airflow for static or reference datasets.
+- **_Query & Analytics_**: Enable SQL querying on the Lakehouse using Trino and visualize insights with Superset.
+- **_Containerized Architecture_**: All services (Lakehouse stack, Kafka, Spark, Airflow, Superset) are orchestrated via Docker for easy setup and reproducibility.
 
 ---
 
@@ -28,13 +30,15 @@ This project demonstrates a **modern Lakehouse architecture** for streaming data
 
 ![Lakehouse Architecture](readme/lakehouse.png)
 
-**Test creating a table using Trino in DBeaver:**
+**Test creating a table using Trino through DBeaver:**
 
-![Trino Test](readme/trino-example.png)
+> The script is put under `experiments` folder
+> ![Test creating table using Trino](readme/trino-iceberg-example.png)
 
 **Check the result on MinIO:**
-
-![MinIO Result](readme/table-format.png)
+![MinIO Result](readme/iceberg-table-example-1.png)
+![MinIO Result](readme/iceberg-table-example-2.png)
+![MinIO Result](readme/iceberg-table-example-3.png)
 
 ## 2.2 Pipeline
 
@@ -43,28 +47,33 @@ This project demonstrates a **modern Lakehouse architecture** for streaming data
 ---
 
 # 📂 3. Project Structure
+
 ```text
 stream-pipeline-via-lakehouse/
 │
-├── init/                              # Initialization scripts
-├── hive/                              # Hive metastore configuration + Dockerfile
-├── trino/                             # Trino configuration
-├── spark/                             # Spark configuration + Dockerfile
-├── superset/                          # Superset configuration + Dockerfile
+├── docker/
+│   ├── init/                              # Initialization scripts in containers
+│   ├── hive/                              # Hive metastore configuration + Dockerfile
+│   ├── trino/                             # Trino configuration
+│   ├── spark/                             # Spark configuration + Dockerfile
+│   ├── airflow/                           # Airflow Dockerfile
+│   ├── superset/                          # Superset configuration + Dockerfile
 │
-├── app/                               # Custom API, fake data generator as a data source
-├── experiments/                       # Example runs / tests of the pipeline
-├── src/                               # ETL source code following the medallion architecture
+├── data/                              # Raw datasets
+├── experiments/                       # Notebooks and scripts for testing pipelines and data exploration
+├── src/                               # Source code
+│   ├── dags/                            # Airflow DAGs scripts to run batch pipeline
+│   ├── producer/                        # Kafka data producer scripts
 │   ├── bronze/                          # Bronze layer – raw ingested data from Kafka
 │   ├── silver/                          # Silver layer – cleaned, standardized, and enriched data
 │   ├── gold/                            # Gold layer – aggregated, analytics-ready data for BI/ML
-│   └── ...                           
 │
 ├── readme/                            # Documentation, diagrams, notes
 │
-├── docker-compose-lakehouse.yml       # Docker Compose for the Lakehouse stack (MinIO, Hive, Postgres, Trino), and Superset
+├── docker-compose-lakehouse.yml       # Docker Compose for the Lakehouse stack (MinIO, Hive Metastore, Postgres, Trino)
+└── docker-compose-kafka.yml           # Docker Compose for Kafka cluster, Schema Registry and Kafka UI
 ├── docker-compose-spark.yml           # Docker Compose for Spark cluster
-└── docker-compose-kafka.yml           # Docker Compose for Kafka cluster, and Kafka UI
+├── docker-compose.yml                 # Docker Compose for Airflow, Superset, ...
 ```
 
 ---
@@ -77,10 +86,12 @@ Before starting, please ensure you have:
 
 - Docker Desktop installed and running.
 - VS Code installed to open project.
-- DBeaver installed to connect to Trino to write SQL.
+- DBeaver installed to connect to Trino to query data from Lakehouse.
 
 ## 4.2 Setup & Initialization
+
 **Step 1:** Before running the pipeline, make sure `make` is installed. On Windows, you install Chocolatey first and then install Make:
+
 ```powershell
 # Install Chocolatey (run in PowerShell as Administrator)
 Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
@@ -92,7 +103,8 @@ choco install make
 make --version
 ```
 
-**Step 2:** Install Hadoop & Hive to set up Hive Metastore:
+**Step 2:** Install Hadoop & Hive to set up Hive Metastore Image:
+
 ```bash
 # Navigate to hive/jars folder
 cd hive/jars
@@ -101,6 +113,7 @@ make download
 ```
 
 **Step 3:** Set up the whole architecture through Docker:
+
 ```bash
 # Create a Docker network "common-net" for all services to communicate with each other
 docker network create common-net
@@ -108,8 +121,17 @@ docker network create common-net
 make all-up
 ```
 
+**Step 4:** Fetch data using the Python script:
+
+```bash
+# Run the Python script to download data into the data folder
+python data/_get_all_data.py
+```
+
 ## 4.3 Service Access
+
 ### Web UI
+
 - **MinIO UI:** http://localhost:9001
   - User: minio
   - Password: minio123
@@ -118,12 +140,16 @@ make all-up
   - Password: superset
 - **Trino UI:** http://localhost:8080
   - User: trino
-  - Password: 
+  - Password:
 - **Kafka UI:** http://localhost:8081
 - **Spark Master UI:** http://localhost:8082
 - **Spark Worker 1 UI:** http://localhost:8083
+- **Airflow UI:** http://localhost:8085
+  - User: airflow
+  - Password: airflow
 
 ### Database / SQL Client
+
 - **Postgres:** localhost:5432 (connect via DBeaver)
   - User: hive
   - Password: hive
@@ -133,4 +159,21 @@ make all-up
   - Password:
 
 ## 4.4 Run the pipeline
-⚠️ **Ongoing**
+
+### Step 1: Initializing Schema
+
+Once Trino container is running, you can initialize the Lakehouse schema using the SQL initialization script:
+
+```bash
+# Access Trino container
+make trino-bash
+# Run the SQL initialization script
+trino --server localhost:8080 --catalog iceberg --file /init/lakehouse_init.sql
+```
+
+Here is the result of running the schema initialization script:
+![Result of Initializing Schema on MinIO](readme/lakehouse-init.png)
+
+### Step 2: Running Batch Pipeline
+
+### Step 3: Running Stream Pipeline

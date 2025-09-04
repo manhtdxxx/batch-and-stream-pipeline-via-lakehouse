@@ -1,8 +1,0 @@
-app-container:
-  build:
-    context: .
-    dockerfile: Dockerfile
-  image: my-app
-  container_name: my-app
-  ports:
-    - 5000:5000

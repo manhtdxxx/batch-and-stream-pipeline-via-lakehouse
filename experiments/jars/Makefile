@@ -34,5 +34,5 @@ download:
 	@ls -lh *jar | grep -E 'iceberg|hadoop-aws|aws-java-sdk'
 
 clean:
-	@echo "🗑️ Cleaning downloaded JARs..."
+	@echo "Cleaning downloaded JARs..."
 	rm -f iceberg-spark-runtime-* hadoop-aws-* aws-java-sdk-bundle-*

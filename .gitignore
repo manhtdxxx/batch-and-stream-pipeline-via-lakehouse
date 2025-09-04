@@ -24,5 +24,11 @@ build/
 *.rar
 *.7z
 
-spark/conf/spark-env.sh
+**/spark-env.sh
 **/spark-warehouse/
+**/*checkpoint*/
+
+*.txt
+
+data/**
+!data/*.py
