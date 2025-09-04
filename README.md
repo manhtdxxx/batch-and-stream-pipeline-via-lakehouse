@@ -173,7 +173,7 @@ Here is the result of running the schema initialization script in MinIO:
 
 ### Step 2: Running Batch Pipeline
 
-Before running the batch pipeline in Airflow, you need to **set up SSH connections** between the Airflow container and the Spark container:
+**2.1** Before running the batch pipeline in Airflow, you need to **set up SSH connections** between the Airflow container and the Spark container:
 ```bash
 # Access the Airflow container
 make airflow-bash
@@ -184,7 +184,7 @@ make spark-bash
 cat /home/spark_user/.ssh/authorized_keys
 ```
 
-After setting up the SSH connection, **access the Airflow UI to trigger the batch DAGs**:
+**2.2** After setting up the SSH connection, access the Airflow UI to trigger the batch DAGs:
 ![Batch ELT Company](readme/batch-elt-company.png)
 ![Batch ELT Industry](readme/batch-elt-industry.png)
 
@@ -192,17 +192,17 @@ After setting up the SSH connection, **access the Airflow UI to trigger the batc
 
 ### Step 3: Running Stream Pipeline
 
-Run the script to produce streaming data to Kafka:
+**3.1** Run the script to produce streaming data to Kafka:
 ```bash
 # Access the Airflow container
 make airflow-bash
 # Run the producer script
 python dags/producer/ohlcv_producer.py
 ```
-💡 Check Kafka UI to verify the data stream:
+Check Kafka UI to verify the data stream:
 ![Kafka UI](readme/kafka-ui.png)
 
-Ingest raw streaming data from Kafka into the Lakehouse:
+**3.2** Ingest raw streaming data from Kafka into the Lakehouse:
 ```bash
 # Access the Spark container
 make spark-bash
@@ -210,7 +210,7 @@ make spark-bash
 spark-submit bronze/raw_ohlcv.py
 ```
 
-Process data from Bronze to Silver:
+**3.3** Process data from Bronze to Silver in Lakehouse:
 ```bash
 # Access the Spark container
 make spark-bash
@@ -219,3 +219,6 @@ spark-submit silver/processed_ohlcv.py
 ```
 
 💡 Check the ingested and processed data in MinIO or query via Trino using DBeaver.
+
+### Step 4:
+**⚠️ Ongoing**
