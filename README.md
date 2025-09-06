@@ -62,7 +62,7 @@ batch-and-stream-pipeline-via-lakehouse/
 ├── src/                               # Source code
 │   ├── dags/                            # Airflow DAGs scripts to run batch pipeline
 │   ├── producer/                        # Kafka data producer scripts
-│   ├── bronze/                          # Bronze layer – raw ingested data from Kafka
+│   ├── bronze/                          # Bronze layer – raw ingested data
 │   ├── silver/                          # Silver layer – cleaned, standardized, and enriched data
 │   ├── gold/                            # Gold layer – aggregated, analytics-ready data for BI/ML
 │
