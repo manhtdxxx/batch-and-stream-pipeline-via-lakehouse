@@ -30,9 +30,6 @@ CREATE TABLE IF NOT EXISTS iceberg.silver.processed_industry (
     level INT,
     icb_name VARCHAR,
     en_icb_name VARCHAR,
-    start_timestamp TIMESTAMP WITH TIME ZONE,
-    end_timestamp TIMESTAMP WITH TIME ZONE,
-    is_current INT,
     batch_id VARCHAR,
     ingest_timestamp TIMESTAMP WITH TIME ZONE,
     ingest_year INT,
@@ -44,14 +41,14 @@ WITH (
 );
 
 
-CREATE TABLE IF NOT EXISTS iceberg.silver.processed_ohlcv (
+CREATE TABLE IF NOT EXISTS iceberg.gold.dim_company (
     symbol VARCHAR,
-    time DATE,
-    open DOUBLE,
-    high DOUBLE,
-    low DOUBLE,
-    close DOUBLE,
-    volume BIGINT,
+    company_name VARCHAR,
+    icb_name_1 VARCHAR,
+    icb_name_2 VARCHAR,
+    icb_name_3 VARCHAR,
+    icb_name_4 VARCHAR,
+    issued_shares BIGINT,
     ingest_timestamp TIMESTAMP WITH TIME ZONE,
     ingest_year INT,
     ingest_month INT

@@ -11,5 +11,5 @@ if __name__ == "__main__":
 
     spark = create_spark_session(app_name="BatchLoadCompanyDataToBronze")
     df = read_csv(spark, file_path)
-    df_with_metadata = add_metadata(df)
+    df_with_metadata = add_metadata(df, ingest_year=True, ingest_month=True, ingest_day=False, batch_id=True)
     write_batch_to_bronze(df_with_metadata, table_name=BRONZE_TABLE)

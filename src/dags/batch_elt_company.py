@@ -31,19 +31,41 @@ with DAG(
     catchup=False,
 ) as dag:
 
-    load_to_bronze = SSHOperator(
-        task_id="load_to_bronze",
+    load_company_to_bronze = SSHOperator(
+        task_id="load_company_to_bronze",
         ssh_conn_id="ssh_spark",
         command=(
             f"bash -c '{SPARK_ENV} && {SPARK_SUBMIT} {os.path.join(SPARK_APP, 'bronze', 'raw_company.py')}'"
         ),
     )
 
-    process_from_bronze_to_silver = SSHOperator(
-        task_id="process_from_bronze_to_silver",
+    load_industry_to_bronze = SSHOperator(
+        task_id="load_industry_to_bronze",
+        ssh_conn_id="ssh_spark",
+        command=f"bash -c '{SPARK_ENV} && {SPARK_SUBMIT} {os.path.join(SPARK_APP, 'bronze', 'raw_industry.py')}'",
+    )
+
+    process_company_to_silver = SSHOperator(
+        task_id="process_company_to_silver",
         ssh_conn_id="ssh_spark",
         command=(
             f"bash -c '{SPARK_ENV} && {SPARK_SUBMIT} {os.path.join(SPARK_APP, 'silver', 'processed_company.py')}'"
         ),
     )
-    load_to_bronze >> process_from_bronze_to_silver
+
+    process_industry_to_silver = SSHOperator(
+        task_id="process_industry_to_silver",
+        ssh_conn_id="ssh_spark",
+        command=f"bash -c '{SPARK_ENV} && {SPARK_SUBMIT} {os.path.join(SPARK_APP, 'silver', 'processed_industry.py')}'",
+    )
+
+    join_both_to_gold = SSHOperator(
+        task_id="join_both_to_gold",
+        ssh_conn_id="ssh_spark",
+        command=f"bash -c '{SPARK_ENV} && {SPARK_SUBMIT} {os.path.join(SPARK_APP, 'gold', 'dim_company.py')}'",
+    )
+
+    # ------DAGS-------
+    load_company_to_bronze >> process_company_to_silver
+    load_industry_to_bronze >> process_industry_to_silver
+    [process_company_to_silver, process_industry_to_silver] >> join_both_to_gold

@@ -56,7 +56,7 @@ def produce_ohlcv_to_kafka(df: pd.DataFrame, kafka_server: str, topic_name: str)
             logger.error(f"Failed to produce message: {e}")
         
         producer.poll(0)
-        time.sleep(0.5)
+        time.sleep(1/30)
 
     producer.flush()
     logger.info("All messages have been produced.")
@@ -64,11 +64,11 @@ def produce_ohlcv_to_kafka(df: pd.DataFrame, kafka_server: str, topic_name: str)
 
 if __name__ == "__main__":
     data_dir = "/opt/airflow/data"
-    file_path = os.path.join(data_dir, "ohlcv_1d.csv")
+    file_path = os.path.join(data_dir, "ohlcv_1m.csv")
     df = pd.read_csv(file_path)
 
     kafka_server = "kafka:29092"
-    topic_name = "ohlcv_1d"
+    topic_name = "ohlcv_1m"
 
     create_topics(kafka_server, topic_name)
     produce_ohlcv_to_kafka(df, kafka_server, topic_name)

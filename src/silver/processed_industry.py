@@ -5,7 +5,7 @@ from pyspark.sql.types import StructType, StructField, StringType, IntegerType, 
 from pyspark.sql.dataframe import DataFrame
 from _silver_utils import (
     create_spark_session, read_batch_from_bronze, normalize_schema, rename_cols, 
-    handle_string, handle_numeric, handle_null, deduplicate, merge_scd2
+    handle_string, handle_numeric, handle_null, deduplicate, merge_scd1
 )
 
 
@@ -38,10 +38,6 @@ def get_cols(col_dtype: str) -> list[str]:
 
 def get_keys() -> list[str]:
     return ["icb_code"]
-
-
-def get_tracked_cols() -> list[str]:
-    return ["level", "icb_name", "en_icb_name"]
 
 
 def process_df(df: DataFrame) -> DataFrame:
@@ -77,5 +73,5 @@ if __name__ == "__main__":
         df = process_df(df)
         if df is not None:
             logger.info(f"Starting to write batch to Silver Table {SILVER_TABLE} with {df.count()} records ...")
-            merge_scd2(df, silver_table=SILVER_TABLE, key_cols=get_keys(), tracked_cols=get_tracked_cols(), spark=df.sparkSession)
+            merge_scd1(df, silver_table=SILVER_TABLE, key_cols=get_keys(), spark=df.sparkSession)
             logger.info(f"Batch writing completed.")

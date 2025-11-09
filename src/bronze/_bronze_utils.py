@@ -1,7 +1,7 @@
 # bronze/_bronze_utils.py
 
 from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.functions import lit, current_timestamp, year, month
+from pyspark.sql.functions import lit, current_timestamp, year, month, dayofmonth
 import uuid
 import logging
 
@@ -38,19 +38,26 @@ def read_stream(spark: SparkSession, kafka_server: str, topic: str):
             .load())
 
 
-def add_metadata(df: DataFrame, with_batch_id: bool = True) -> DataFrame:
-    logger.info("Added metadata: ingest_timestamp, ingest_year/month, ...")
-    df = (df.withColumn("ingest_timestamp", current_timestamp())
-            .withColumn("ingest_year", year(current_timestamp()))
-            .withColumn("ingest_month", month(current_timestamp())))
-    if with_batch_id:
+def add_metadata(df: DataFrame, ingest_year: bool, ingest_month: bool, ingest_day: bool, batch_id: bool) -> DataFrame:
+    logger.info("Adding metadata columns...")
+
+    df = df.withColumn("ingest_timestamp", current_timestamp())
+
+    if ingest_year:
+        df = df.withColumn("ingest_year", year("ingest_timestamp"))
+    if ingest_month:
+        df = df.withColumn("ingest_month", month("ingest_timestamp"))
+    if ingest_day:
+        df = df.withColumn("ingest_day", dayofmonth("ingest_timestamp"))
+
+    if batch_id:
         batch_id = str(uuid.uuid4())
         df = df.withColumn("batch_id", lit(batch_id))
+
     return df
 
 
-def write_batch_to_bronze(df: DataFrame, table_name: str) -> None:
-    partition_cols = ["ingest_year", "ingest_month"]
+def write_batch_to_bronze(df: DataFrame, table_name: str, partition_cols: list[str] = ["ingest_year", "ingest_month"]) -> None:
     logger.info(f"Writing Batch to bronze table: {table_name} ...")
     (df.write.format("iceberg")
             .mode("append")
@@ -59,9 +66,9 @@ def write_batch_to_bronze(df: DataFrame, table_name: str) -> None:
     logger.info("Write successful!")
 
 
-def write_stream_to_bronze(df: DataFrame, table_name: str, checkpoint_path: str, processingTime: str = "5 seconds") -> None:
-    partition_cols = ["ingest_year", "ingest_month"]
+def write_stream_to_bronze(df: DataFrame, table_name: str, checkpoint_path: str, processingTime: str = "5 seconds", partition_cols: list[str] = ["ingest_year", "ingest_month", "ingest_day"]) -> None:
     logger.info(f"Writing Stream to bronze table: {table_name} ...")
+
     query = (df.writeStream.format("iceberg")
              .outputMode("append")
              .option("checkpointLocation", checkpoint_path)

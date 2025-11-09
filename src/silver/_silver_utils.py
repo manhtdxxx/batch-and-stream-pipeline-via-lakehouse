@@ -24,15 +24,15 @@ def create_spark_session(app_name: str, max_cores: int = 1, cores_per_executor: 
             .config("spark.executor.memory", memory_per_executor)
             .getOrCreate())
 
+
 # -------- Read --------
 def read_stream_from_bronze(spark: SparkSession, bronze_table: str) -> DataFrame:
-    logger.info(f"Reading bronze stream from table: {bronze_table} ...")
+    logger.info(f"Reading stream from table: {bronze_table} ...")
     df = spark.readStream.format("iceberg").load(f"iceberg.bronze.{bronze_table}")
     return df
 
 
-def read_batch_from_bronze(spark: SparkSession, bronze_table: str, silver_table: str, timestamp_col: str = "ingest_timestamp") -> DataFrame:
-    logger.info(f"Starting incremental load from {bronze_table} to {silver_table} ...")
+def read_batch_from_bronze(spark: SparkSession, bronze_table: str, silver_table: str, timestamp_col: str) -> DataFrame:
     bronze_path = f"iceberg.bronze.{bronze_table}"
     silver_path = f"iceberg.silver.{silver_table}"
 
@@ -110,7 +110,7 @@ def _add_scd2_cols(df: DataFrame) -> DataFrame:
     return (df.withColumn("start_timestamp", current_timestamp())
               .withColumn("end_timestamp", lit(None).cast(TimestampType()))
               .withColumn("is_current", lit(1).cast(IntegerType())))
-# it would be better to have col "updated_at", since I dont have it, I will use current_timestamp()
+# it would be better to have col "updated_at", since I dont have it, I will use current_timestamp() for example
 
 
 def merge_scd2(df: DataFrame, silver_table: str, key_cols: list[str], tracked_cols: list[str], spark: SparkSession):
@@ -182,5 +182,5 @@ def merge_scd1(df: DataFrame, silver_table: str, key_cols: list[str], spark: Spa
             WHEN NOT MATCHED THEN
               INSERT ({insert_cols}) VALUES ({insert_vals})
         """
-        logger.info(f"Upserting into Silver Fact Table: {silver_table} ...")
+        logger.info(f"Merging SCD Type 1 into Silver Table: {silver_table} ...")
         spark.sql(upsert_stmt)

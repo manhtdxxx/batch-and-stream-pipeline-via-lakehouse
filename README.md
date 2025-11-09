@@ -161,6 +161,7 @@ python data/_get_all_data.py
 ### Step 1: Initializing Schema in Lakehouse
 
 Once Trino container is running, you can initialize the Lakehouse schema using the SQL initialization script:
+
 ```bash
 # Access the Trino container
 make trino-bash
@@ -174,6 +175,7 @@ Here is the result of running the schema initialization script in MinIO:
 ### Step 2: Running Batch Pipeline
 
 **2.1** Before running the batch pipeline in Airflow, you need to **set up SSH connections** between the Airflow container and the Spark container:
+
 ```bash
 # Access the Airflow container
 make airflow-bash
@@ -193,32 +195,37 @@ cat /home/spark_user/.ssh/authorized_keys
 ### Step 3: Running Stream Pipeline
 
 **3.1** Run the script to produce streaming data to Kafka:
+
 ```bash
 # Access the Airflow container
 make airflow-bash
 # Run the producer script
 python dags/producer/ohlcv_producer.py
 ```
+
 Check Kafka UI to verify the data stream:
 ![Kafka UI](readme/kafka-ui.png)
 
 **3.2** Ingest raw streaming data from Kafka into the Lakehouse:
+
 ```bash
 # Access the Spark container
 make spark-bash
 # Run the ingestion script
-spark-submit bronze/raw_ohlcv.py
+spark-submit bronze/ohlcv_1m.py
 ```
 
 **3.3** Process data from Bronze to Silver in Lakehouse:
+
 ```bash
 # Access the Spark container
 make spark-bash
 # Run the processing script
-spark-submit silver/processed_ohlcv.py
+spark-submit silver/ohlcv_agg.py
 ```
 
 💡 Check the ingested and processed data in MinIO or query via Trino using DBeaver.
 
 ### Step 4:
+
 **⚠️ Ongoing**
